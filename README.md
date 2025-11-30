@@ -1,18 +1,17 @@
 <h1 align="center">💈 Barbershop Dashboard </h1>
 
 <p align="center">
-  <a href="#-tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#-projeto">Projeto</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#memo-execução">Execução</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-  <a href="#chart_with_upwards_trend-gerar-dados-fictícios">Gerar Dados Fictícios</a>
+  <a href="#tecnologias">Tecnologias</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#projeto">Projeto</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#execucao">Execução</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#gerar-dados-ficticios">Gerar Dados Fictícios</a>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+  <a href="#objetivos">Objetivos</a>
 </p>
 
 <br>
 
 <p align="center">
-  <img width="100%" alt="Barbershop Dashboard"
-    src="<img width="1909" height="979" alt="image" src="https://github.com/user-attachments/assets/2fad5835-09e7-4bbd-916f-39c89de53ac2" />
-" />
+  <img width="100%" alt="Barbershop Dashboard" src="https://github.com/user-attachments/assets/b89b59e5-05e3-48cd-8688-a54255ea0ee3">
 </p>
 
 ---
@@ -49,12 +48,10 @@ O sistema também permite **gerar automaticamente dados fictícios reais**, simu
 
 Siga os passos abaixo para rodar o projeto localmente:
 
----
-
 ### **1️⃣ Clone o repositório**
 
 ```bash
-  git clone https://github.com/BrenoPorfirio/Barbershop-Dashboard.git
+git clone https://github.com/BrenoPorfirio/Barbershop-Dashboard.git
 ```
 
 ### **2️⃣ Acesse o diretório**
@@ -71,6 +68,11 @@ Siga os passos abaixo para rodar o projeto localmente:
   streamlit run app.py
 ```
 
+### **4️⃣ Outra opção de execução**
+```bash
+  python -m streamlit run app.py
+```
+
 ---
 ## 📈 Gerar Dados Fictícios
 
@@ -82,6 +84,7 @@ Se quiser atualizar ou regenerar completamente os dados de 2025 e 2026, execute 
 Esse comando cria automaticamente:
 
 data/table_2025.csv
+
 data/table_2026.csv
 
 🔹 Os dados incluem variações reais, picos em meses específicos e limites bem definidos.
