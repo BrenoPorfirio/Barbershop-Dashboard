@@ -188,3 +188,29 @@ fig_heat_2026 = px.imshow(clean2026.drop(columns=["day", "total_day"]).values,
                           color_continuous_scale="OrRd",
                           labels=dict(x="Semana", y="Dia"))
 st.plotly_chart(fig_heat_2026, use_container_width=True)
+
+# --- NOVO GRÁFICO: soma dos atendimentos por dia da semana ---
+def sum_by_weekday(df):
+    df_sums = df.drop(columns=["total_day"]).groupby("day").sum()
+    df_sums["Total"] = df_sums.sum(axis=1)
+    return df_sums["Total"].reindex(DAYS_FULL)
+
+sums_2025 = sum_by_weekday(clean2025)
+sums_2026 = sum_by_weekday(clean2026)
+
+df_weekday_compare = pd.DataFrame({
+    "Dia da Semana": DAYS_FULL,
+    "Atendimentos 2025": sums_2025.values,
+    "Atendimentos 2026": sums_2026.values
+})
+
+st.header("📊 Total de Atendimentos por Dia da Semana – 2025 vs Previsão 2026")
+fig_weekday_compare = px.bar(
+    df_weekday_compare,
+    x="Dia da Semana",
+    y=["Atendimentos 2025", "Atendimentos 2026"],
+    barmode="group",
+    title="Atendimentos por Dia da Semana",
+    template="plotly_white"
+)
+st.plotly_chart(fig_weekday_compare, use_container_width=True)

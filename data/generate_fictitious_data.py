@@ -21,7 +21,6 @@ def linear_regression(series, variation=0.15):
     return np.maximum(0, np.round(pred * noise).astype(int))
 
 def add_peak(values):
-    """Picos aleatórios apenas para 2025"""
     for peak_weeks in PEAK_WEEKS.values():
         week = np.random.choice(peak_weeks)
         day_idx = np.random.randint(0, len(DAYS))
@@ -72,7 +71,6 @@ def generate_2025():
 
 
 def add_peak_2026(values):
-    """Aplica picos reais de aumento somente em Wed–Sat nos meses Feb, Jul, Dec"""
     for peak_list in PEAK_WEEKS.values():
         for w in peak_list:
             for day_idx in range(2, 6):
