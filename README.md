@@ -33,12 +33,12 @@ Esse projeto foi desenvolvido utilizando:
 
 O **Barbershop Dashboard** é um painel interativo criado para facilitar a visualização de métricas importantes de uma barbearia, incluindo:
 
-- ✔️ Atendimentos semanais e mensais  
-- ✔️ Custos detalhados  
-- ✔️ Lucros reais e projetados  
-- ✔️ Comparação entre anos (2025 vs. 2026)  
-- ✔️ Mapa de calor dos atendimentos  
-- ✔️ Estatísticas dos melhores dias e semanas  
+- ✔️ Atendimentos semanais e mensais
+- ✔️ Custos detalhados
+- ✔️ Lucros reais e projetados
+- ✔️ Comparação entre anos (2025 vs. 2026)
+- ✔️ Mapa de calor dos atendimentos
+- ✔️ Estatísticas dos melhores dias e semanas
 
 O sistema também permite **gerar automaticamente dados fictícios reais**, simulando períodos anuais completos.
 
@@ -55,35 +55,40 @@ git clone https://github.com/BrenoPorfirio/Barbershop-Dashboard.git
 ```
 
 ### **2️⃣ Acesse o diretório**
+
 ```bash
   cd Barbershop-Dashboard
 ```
+
 ### **3️⃣ Instale as dependências**
+
 ```bash
   pip install -r requirements.txt
 ```
 
 ### **4️⃣ Execute o dashboard Streamlit**
+
 ```bash
   streamlit run app.py
 ```
 
 ### **4️⃣ Outra opção de execução**
+
 ```bash
   python -m streamlit run app.py
 ```
 
 ---
+
 ## 📈 Gerar Dados Fictícios
 
 Se quiser atualizar ou regenerar completamente os dados de 2025 e 2026, execute o script responsável:
+
 ```bash
   python data/generate_fictitious_data.py
 ```
 
 Esse comando cria automaticamente:
-
-data/table_2025.csv
 
 data/table_2026.csv
 
@@ -91,6 +96,7 @@ data/table_2026.csv
 🔹 Ideal para simulação e testes do dashboard.
 
 ---
+
 ## 🎯 Objetivo
 
 Este dashboard foi desenvolvido para auxiliar barbearias e pequenos negócios a monitorar:
