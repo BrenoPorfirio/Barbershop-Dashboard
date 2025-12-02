@@ -1,9 +1,25 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
+import os
 
 st.set_page_config(page_title="💈 Dashboard da Barbearia", layout="wide")
-st.title("💈 Dashboard da Barbearia – Visão de Atendimentos e Finanças")
+st.title("💈 Dashboard da Barbearia – Série Temporal e Finanças")
+
+DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+DAYS_FULL = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"]
+WEEKS = [f"week{i}" for i in range(1, 53)]
+
+months = {
+    "Janeiro": range(1, 5), "Fevereiro": range(5, 9), "Março": range(9, 13),
+    "Abril": range(13, 17), "Maio": range(17, 21), "Junho": range(21, 25),
+    "Julho": range(25, 29), "Agosto": range(29, 33), "Setembro": range(33, 37),
+    "Outubro": range(37, 41), "Novembro": range(41, 45), "Dezembro": range(45, 53)
+}
+
+np.random.seed(42)
 
 @st.cache_data
 def load_data():
@@ -13,40 +29,45 @@ def load_data():
 
 df2025, df2026 = load_data()
 
-def clean_dataframe(df):
-    df_clean = df[df["day"] != "total_week"].copy()
-    weeks = df_clean.drop(columns=["day", "total_day"])
-    return df_clean, weeks
+def clean_df(df):
+    df_clean = df.copy()
+    df_clean["day"] = df_clean["day"].map(dict(zip(DAYS, DAYS_FULL)))
+    weeks_cols = df_clean.drop(columns=["day", "total"]).columns
+    return df_clean, weeks_cols
 
-DAYS_MAP = {
-    "Mon": "Segunda-feira", "Tue": "Terça-feira", "Wed": "Quarta-feira",
-    "Thu": "Quinta-feira", "Fri": "Sexta-feira", "Sat": "Sábado"
-}
+clean2025, weeks2025 = clean_df(df2025)
+clean2026, weeks2026 = clean_df(df2026)
 
-def translate_week(week_str):
-    if "week" in week_str:
-        return "Semana " + week_str.replace("week", "")
-    return week_str
+def compute_statistics(df, df_fin):
+    max_single_value = df[WEEKS].max().max()
+    best_single_day = df.loc[df[WEEKS].eq(max_single_value).any(axis=1), "day"].values[0]
 
-DAYS_FULL = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"]
+    total_per_day = df[WEEKS].sum(axis=1)
+    best_total_day = df.loc[total_per_day.idxmax(), "day"]
+    best_total_value = total_per_day.max()
 
-clean2025, weeks2025 = clean_dataframe(df2025)
-clean2026, weeks2026 = clean_dataframe(df2026)
+    total_per_week = df[WEEKS].sum()
+    best_week = total_per_week.idxmax()
+    best_week_value = total_per_week.max()
 
-clean2025["day"] = clean2025["day"].map(DAYS_MAP)
-clean2026["day"] = clean2026["day"].map(DAYS_MAP)
+    best_profit_month = df_fin.loc[df_fin["Lucro"].idxmax(), "Mês"]
+    best_profit_value = df_fin["Lucro"].max()
 
-months = {
-    "Janeiro": range(1, 5), "Fevereiro": range(5, 9), "Março": range(9, 13),
-    "Abril": range(13, 17), "Maio": range(17, 21), "Junho": range(21, 25),
-    "Julho": range(25, 29), "Agosto": range(29, 33), "Setembro": range(33, 37),
-    "Outubro": range(37, 41), "Novembro": range(41, 45), "Dezembro": range(45, 53)
-}
+    highest_cost_month = df_fin.loc[df_fin["Custos"].idxmax(), "Mês"]
+    highest_cost_value = df_fin["Custos"].max()
 
-water_per_service = 10
-energy_per_service = 0.5
+    best_week_translated = "Semana " + best_week.replace("week", "")
+    return {
+        "best_week": (best_week_translated, best_week_value),
+        "best_single_day": (best_single_day, max_single_value),
+        "best_total_day": (best_total_day, best_total_value),
+        "best_profit": (best_profit_month, best_profit_value),
+        "highest_cost": (highest_cost_month, highest_cost_value)
+    }
 
 def compute_financials(df, year):
+    water_per_service = 10
+    energy_per_service = 0.5
     monthly_totals, costs, profits = {}, {}, {}
 
     for month, week_range in months.items():
@@ -54,24 +75,16 @@ def compute_financials(df, year):
         total_services = df[cols].sum().sum()
         monthly_totals[month] = total_services
 
-        base_cost = 0
-        monthly_profit = 0
+        base_cost = total_services * water_per_service * 0.13 + total_services * energy_per_service * 1.0
+        monthly_profit = total_services * 35
 
         if year == 2025:
             if month in ["Janeiro", "Fevereiro", "Março", "Abril", "Maio"]:
                 monthly_profit = total_services * 30 * 0.25
             else:
                 monthly_profit = total_services * 35
-                base_cost = 1000
-
-        elif year == 2026:
-            monthly_profit = total_services * 35
-            base_cost = 1000
-
-        if (year == 2025 and month in ["Outubro", "Novembro", "Dezembro"]) or year == 2026:
-            base_cost += total_services * water_per_service * 0.13
-            base_cost += total_services * energy_per_service * 1.0
-
+                if month == "Novembro":
+                    base_cost += 3400
         costs[month] = base_cost
         profits[month] = monthly_profit
 
@@ -85,42 +98,10 @@ def compute_financials(df, year):
 df_fin_2025 = compute_financials(clean2025, 2025)
 df_fin_2026 = compute_financials(clean2026, 2026)
 
-extra_costs_2025 = {"CADEIRA": {"month": "Novembro", "value": 3400}}
-for item, info in extra_costs_2025.items():
-    df_fin_2025.loc[df_fin_2025["Mês"] == info["month"], "Custos"] += info["value"]
-
-def compute_statistics(df, df_fin):
-    max_single_value = df.drop(columns=["day", "total_day"]).max().max()
-    best_single_day = df.loc[df.drop(columns=["day", "total_day"]).eq(max_single_value).any(axis=1), "day"].values[0]
-
-    total_per_day = df.drop(columns=["day", "total_day"]).sum(axis=1)
-    best_total_day = df.loc[total_per_day.idxmax(), "day"]
-    best_total_value = total_per_day.max()
-
-    total_per_week = df.drop(columns=["day", "total_day"]).sum()
-    best_week = total_per_week.idxmax()
-    best_week_value = total_per_week.max()
-
-    best_profit_month = df_fin.loc[df_fin["Lucro"].idxmax(), "Mês"]
-    best_profit_value = df_fin["Lucro"].max()
-
-    highest_cost_month = df_fin.loc[df_fin["Custos"].idxmax(), "Mês"]
-    highest_cost_value = df_fin["Custos"].max()
-
-    best_week_translated = translate_week(best_week)
-
-    return {
-        "best_week": (best_week_translated, best_week_value),
-        "best_single_day": (best_single_day, max_single_value),
-        "best_total_day": (best_total_day, best_total_value),
-        "best_profit": (best_profit_month, best_profit_value),
-        "highest_cost": (highest_cost_month, highest_cost_value)
-    }
-
 stats2025 = compute_statistics(clean2025, df_fin_2025)
 stats2026 = compute_statistics(clean2026, df_fin_2026)
 
-st.header("📊 Estatísticas Relevantes 2025 e Previsão 2026")
+st.header("📊 KPIs Relevantes 2025 e Previsão 2026")
 def display_cards(stats, year):
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric(f"📅 Semana mais atendida {year}", stats['best_week'][0], f"{stats['best_week'][1]} atendimentos")
@@ -133,7 +114,7 @@ display_cards(stats2025, 2025)
 st.markdown("---")
 display_cards(stats2026, "Previsão 2026")
 
-st.header("📌 Custos e Lucros Individuais por Ano")
+st.header("📌 Custos e Lucros Mensais")
 col1, col2 = st.columns(2)
 fig_cost_2025 = px.bar(df_fin_2025, x="Mês", y="Custos", title="Custos 2025", template="plotly_white")
 fig_cost_2026 = px.bar(df_fin_2026, x="Mês", y="Custos", title="Custos previstos 2026", template="plotly_white")
@@ -146,7 +127,7 @@ fig_profit_2026 = px.bar(df_fin_2026, x="Mês", y="Lucro", title="Lucros previst
 col3.plotly_chart(fig_profit_2025, use_container_width=True)
 col4.plotly_chart(fig_profit_2026, use_container_width=True)
 
-st.header("📊 Comparativo de Atendimentos e Lucros 2025 vs Previsão 2026")
+st.header("📊 Comparativo Mensal 2025 vs 2026")
 df_comparison = pd.DataFrame({
     "Mês": df_fin_2025["Mês"],
     "Atendimentos 2025": df_fin_2025["Atendimentos"],
@@ -163,28 +144,52 @@ fig_profit = px.line(df_comparison, x="Mês", y=["Lucro 2025", "Lucro 2026"],
                      title="Lucro Mensal 2025 vs Previsão 2026", markers=True, template="plotly_white")
 st.plotly_chart(fig_profit, use_container_width=True)
 
-st.header("💰 Comparativo de Custos: 2025 vs Previsão 2026")
-df_cost_compare = pd.DataFrame({
-    "Mês": df_fin_2025["Mês"],
-    "Custos 2025": df_fin_2025["Custos"],
-    "Custos previstos 2026": df_fin_2026["Custos"]
-})
-fig_cost_compare = px.line(df_cost_compare, x="Mês", y=["Custos 2025", "Custos previstos 2026"],
-                           markers=True, template="plotly_white")
-st.plotly_chart(fig_cost_compare, use_container_width=True)
-
 st.header("🔥 Mapa de Calor Semanal 2025")
-fig_heat_2025 = px.imshow(clean2025.drop(columns=["day", "total_day"]).values,
-                          x=[translate_week(col) for col in clean2025.drop(columns=["day", "total_day"]).columns],
+fig_heat_2025 = px.imshow(clean2025[WEEKS].values,
+                          x=[f"Semana {i}" for i in range(1,53)],
                           y=DAYS_FULL,
                           color_continuous_scale="OrRd",
                           labels=dict(x="Semana", y="Dia"))
 st.plotly_chart(fig_heat_2025, use_container_width=True)
 
-st.header("🔥 Previsão de Mapa de Calor Semanal 2026")
-fig_heat_2026 = px.imshow(clean2026.drop(columns=["day", "total_day"]).values,
-                          x=[translate_week(col) for col in clean2026.drop(columns=["day", "total_day"]).columns],
+st.header("🔥 Mapa de Calor Semanal 2026")
+fig_heat_2026 = px.imshow(clean2026[WEEKS].values,
+                          x=[f"Semana {i}" for i in range(1,53)],
                           y=DAYS_FULL,
                           color_continuous_scale="OrRd",
                           labels=dict(x="Semana", y="Dia"))
 st.plotly_chart(fig_heat_2026, use_container_width=True)
+
+st.header("📅 Evolução Semanal por Dia da Semana – 2026")
+fig_weekly = go.Figure()
+for i, day in enumerate(DAYS_FULL):
+    fig_weekly.add_trace(go.Scatter(y=clean2026.loc[clean2026["day"]==day, WEEKS].values.flatten(),
+                                    mode="lines+markers", name=day))
+fig_weekly.update_layout(title="Atendimentos Semanais 2026 por Dia da Semana",
+                         xaxis_title="Semana", yaxis_title="Atendimentos")
+st.plotly_chart(fig_weekly, use_container_width=True)
+
+st.header("📊 Variabilidade Semanal 2026")
+weekly_values = clean2026[WEEKS].values.flatten()
+fig_box = px.box(pd.DataFrame(clean2026[WEEKS].T), title="Distribuição de Atendimentos Semanais 2026", labels={"variable":"Semana","value":"Atendimentos"})
+st.plotly_chart(fig_box, use_container_width=True)
+
+fig_hist = px.histogram(weekly_values, nbins=20, title="Histograma de Atendimentos Semanais 2026", labels={"value":"Atendimentos"})
+st.plotly_chart(fig_hist, use_container_width=True)
+
+st.header("📈 Tendência Acumulada 2026")
+cum_values = clean2026[WEEKS].cumsum(axis=1)
+fig_cum = go.Figure()
+for i, day in enumerate(DAYS_FULL):
+    fig_cum.add_trace(go.Scatter(y=cum_values.iloc[i], mode="lines+markers", name=day))
+fig_cum.update_layout(title="Atendimentos Acumulados 2026", xaxis_title="Semana", yaxis_title="Atendimentos acumulados")
+st.plotly_chart(fig_cum, use_container_width=True)
+
+st.header("📊 Comparativo Semanal 2025 vs 2026")
+weekly_2025 = clean2025[WEEKS].sum()
+weekly_2026 = clean2026[WEEKS].sum()
+fig_compare = go.Figure()
+fig_compare.add_trace(go.Scatter(y=weekly_2025.values, mode="lines+markers", name="2025"))
+fig_compare.add_trace(go.Scatter(y=weekly_2026.values, mode="lines+markers", name="2026"))
+fig_compare.update_layout(title="Atendimentos Semana a Semana: 2025 vs 2026", xaxis_title="Semana", yaxis_title="Atendimentos")
+st.plotly_chart(fig_compare, use_container_width=True)
