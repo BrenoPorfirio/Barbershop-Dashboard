@@ -25,6 +25,7 @@ Esse projeto foi desenvolvido utilizando:
 - **Pandas**
 - **NumPy**
 - **Plotly**
+- **ARIMA**
 - **Git & GitHub**
 
 ---
@@ -82,7 +83,7 @@ git clone https://github.com/BrenoPorfirio/Barbershop-Dashboard.git
 
 ## 📈 Gerar Dados Fictícios
 
-Se quiser atualizar ou regenerar completamente os dados de 2025 e 2026, execute o script responsável:
+Se quiser regenerar completamente os dados de 2026, execute o script responsável:
 
 ```bash
   python data/generate_fictitious_data.py
